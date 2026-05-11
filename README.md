@@ -40,7 +40,7 @@
 │  └────────────────────────────────────────────────────────────┘   │
 │                                   │                               │
 │  ┌─────────┐  ┌─────────┐  ┌─────────────┐  ┌──────────────┐   │
-│  │  Trino  │  │  Redis  │  │   gRPC      │  │  Prometheus + │   │
+│  │  Trino  │  │  Redis  │  │ Node Exporter│  │  Prometheus + │   │
 │  │(Queries)│  │ (Slots) │  │   Server    │  │   Grafana    │   │
 │  └─────────┘  └─────────┘  └─────────────┘  └──────────────┘   │
 │       │                                                │          │
@@ -68,7 +68,7 @@
 | **Visualization** | Streamlit | Business dashboards |
 | **Infrastructure Monitoring** | Prometheus + Grafana | Metrics collection, alerting |
 | **AI Processing** | YOLO + STLinear | Vehicle detection, congestion prediction |
-| **Camera Agents** | gRPC | Lightweight metrics streaming from camera nodes |
+| **Node Exporter** | Prometheus | Host metrics collection (CPU, RAM, disk, network) |
 
 ---
 
@@ -78,7 +78,7 @@
 traffic-lakehouse/
 │
 ├── docker-compose.yml                  # Compute node: PostgreSQL, Iceberg REST, Trino,
-│                                      #   Zookeeper, Kafka, Redis, Kafka UI, gRPC Server,
+│                                      #   Zookeeper, Kafka, Redis, Kafka UI
 │                                      #   Kafka Exporter
 │
 ├── .env.compute.example               # Environment template for compute node
@@ -110,10 +110,7 @@ traffic-lakehouse/
 │   ├── .env.monitoring.example        # Environment template for monitoring
 │   ├── deploy.sh                      # Automated monitoring deployment script
 │   ├── MONITORING.md                  # Full monitoring system documentation
-│   ├── Dockerfile.server              # Builds gRPC metrics server container
-│   ├── Dockerfile.agent               # Builds camera agent container
-│   ├── config_server.env              # gRPC server environment variables
-│   ├── requirements.txt              # gRPC server Python dependencies
+│   ├── requirements.txt              # Python dependencies
 │   │
 │   ├── prometheus/
 │   │   ├── prometheus.yml             # Scrape config: NiFi (JWT), Node Exporter,
@@ -137,21 +134,6 @@ traffic-lakehouse/
 │   │
 │   ├── scripts/
 │   │   └── refresh_nifi_token.sh      # JWT token refresh for NiFi Prometheus endpoint
-│   │
-│   ├── grpc_server/
-│   │   └── server.py                  # gRPC server: receives agent metrics, produces
-│   │                                   #   to Kafka, exposes Prometheus metrics on :50052
-│   │
-│   ├── agent/
-│   │   ├── agent.py                   # Camera agent: collects CPU/RAM/disk/net metrics,
-│   │   │                               #   streams to gRPC server (bidirectional)
-│   │   ├── collect.py                  # MetricCollector: CPU %, RAM %, disk I/O, net I/O
-│   │   └── requirements.txt            # Agent Python dependencies
-│   │
-│   └── protobuf/
-│       ├── monitoring.proto            # gRPC service definition
-│       ├── monitoring_pb2.py          # Generated protobuf code
-│       └── monitoring_pb2_grpc.py      # Generated gRPC stubs
 │
 ├── tphcm-traffic-dashboard/
 │   ├── app.py                         # Streamlit main entry (4 dashboard navigation)
@@ -287,7 +269,7 @@ Prometheus scrape targets:
 - **Node Exporter** — CPU, RAM, disk I/O, network I/O per host
 - **Kafka Exporter** — Consumer lag and topic offsets
 - **Redis Exporter** — Memory, keys, hits/misses
-- **gRPC Server** — Prometheus metrics endpoint on `:50052`
+- **Node Exporter** — Host metrics on `:9100`
 
 11 alert rules in 4 groups:
 1. **NiFi Pipeline** — queue backpressure, stalled pipelines, processor errors

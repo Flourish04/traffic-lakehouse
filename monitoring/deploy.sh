@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# Deploy Script - NiFi Monitoring Stack (Prometheus + Grafana + Node Exporter + Kafka Exporter)
+# Deploy Script - NiFi Monitoring Stack (Prometheus + Grafana + Node Exporter)
 # Usage: sudo bash deploy.sh
 # =============================================================================
 

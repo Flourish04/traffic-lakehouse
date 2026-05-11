@@ -162,39 +162,3 @@ groups:
         annotations:
           summary: "Không có messages mới trên topic '{{ $labels.topic }}'"
 
-  # ===========================================================================
-  # Camera Agent / gRPC Server Alerts
-  # ===========================================================================
-  - name: camera_monitoring_alerts
-    rules:
-      # --- Agent ngừng gửi metrics
-      - alert: CameraAgentSilent
-        expr: |
-          camera_active_agents > 0
-          and
-          (camera_metrics_received_total - camera_metrics_received_total offset 5m) == 0
-        for: 5m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Agent camera không gửi metrics hơn 5 phút"
-          description: "Không có metrics mới được nhận. Kiểm tra agent trên Storage VPS."
-
-      # --- gRPC Server produce Kafka thất bại
-      - alert: CameraMetricsKafkaFailure
-        expr: rate(camera_metrics_produced_failed_total[5m]) > 0
-        for: 2m
-        labels:
-          severity: warning
-        annotations:
-          summary: "gRPC Server không produce được metrics vào Kafka"
-          description: "Tỷ lệ thất bại: {{ $value }}/s"
-
-      # --- Agent không kết nối
-      - alert: CameraNoAgentsConnected
-        expr: camera_active_agents == 0
-        for: 10m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Không có agent nào kết nối tới gRPC Server"

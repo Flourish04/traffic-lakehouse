@@ -227,30 +227,7 @@ services:
     restart: unless-stopped
 
   # ─────────────────────────────────────────────
-  # 8) gRPC Server: nhận metrics từ Agent → produce vào Kafka
-  # ─────────────────────────────────────────────
-  grpc-server:
-    build:
-      context: /root/infra/nifi/monitoring
-      dockerfile: Dockerfile.server
-    container_name: grpc-server
-    ports:
-      - "${GRPC_SERVER_PORT:-50051}:50051"
-    environment:
-      - GRPC_SERVER_HOST=0.0.0.0
-      - GRPC_SERVER_PORT=${GRPC_SERVER_PORT:-50051}
-      - GRPC_METRICS_PORT=50052
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9093
-      - MONITORING_TOPIC=${MONITORING_TOPIC:-metrics}
-    networks:
-      - compute_net
-    restart: unless-stopped
-    depends_on:
-      kafka:
-        condition: service_healthy
-
-  # ─────────────────────────────────────────────
-  # 9) Kafka Exporter: Kafka broker metrics → Prometheus
+  # 8) Kafka Exporter: Kafka broker metrics → Prometheus
   # ─────────────────────────────────────────────
   kafka-exporter:
     image: danielqsj/kafka-exporter:latest
