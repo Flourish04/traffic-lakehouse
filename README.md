@@ -1,11 +1,6 @@
 # Traffic Data Lakehouse - Ho Chi Minh City
 
-**Hệ thống giám sát và dự báo giao thông thông minh cho TP.HCM** — đồ án tốt nghiệp ngành Khoa học Máy tính, Trường Đại học Bách Khoa TP.HCM, Học kỳ 2 năm học 2025-2026.
-
-Hệ thống tích hợp dữ liệu đa phương thức (hình ảnh, vận tốc, thời tiết, tin tức, giọng nói) trên nền tảng **Data Lakehouse** để phân tích và dự báo ùn tắc giao thông theo thời gian thực, thử nghiệm trên **23 camera giao thông** tại TP.HCM và mở rộng lên **120 camera** trong giai đoạn triển khai thực tế.
-
-**Sinh viên thực hiện:** Phan Lương Hưng, Nguyễn Trọng Kha, Lê Duy Khang, Lý Nguyên Khang
-**Giảng viên hướng dẫn:** PGS.TS. Trần Minh Quang, ThS. Đỗ Thanh Thái
+**Intelligent traffic monitoring and congestion prediction system** for Ho Chi Minh City. Integrates multi-modal data (images, speed, weather, news, voice) on a Data Lakehouse platform to analyze and forecast traffic congestion in real time, tested on 23 traffic cameras across Ho Chi Minh City.
 
 ---
 
