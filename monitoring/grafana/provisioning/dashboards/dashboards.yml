@@ -1,0 +1,12 @@
+apiVersion: 1
+providers:
+  - name: 'NiFi & Camera'
+    orgId: 1
+    folder: 'NiFi'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
+      foldersFromFilesStructure: false
+    skipCircles: true

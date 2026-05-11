@@ -1,0 +1,200 @@
+# =============================================================================
+# Prometheus Alert Rules for NiFi Traffic Pipeline
+# Pipeline: IMAGE_INGESTION → SPEED_INGESTION → WEATHER_INGESTION → BATCHING → AI
+# =============================================================================
+
+groups:
+  # ===========================================================================
+  # NiFi Pipeline Alerts
+  # ===========================================================================
+  - name: nifi_pipeline
+    rules:
+      # --- Queue tắc nghẽn ---
+      - alert: NiFiQueueBackPressure
+        expr: nifi_amount_flowfiles_queued{component_type="ProcessGroup"} > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Queue backpressure on {{ $labels.component_name }}"
+          description: "Process Group {{ $labels.component_name }} có {{ $value }} flowfiles đang chờ xử lý hơn 5 phút."
+
+      # --- Pipeline ngừng xử lý ---
+      - alert: NiFiPipelineStalled
+        expr: >
+          rate(nifi_amount_flowfiles_sent{
+            component_type="ProcessGroup",
+            component_name=~"IMAGE_INGESTION|SPEED_INGESTION|WEATHER_INGESTION|BATCHING|AI"
+          }[10m]) == 0
+        for: 15m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Pipeline {{ $labels.component_name }} đã ngừng hoạt động"
+          description: "Không có flowfile nào được xử lý trong 15 phút. Kiểm tra camera/API sources."
+
+      # --- Processor bị lỗi ---
+      - alert: NiFiProcessorErrors
+        expr: nifi_amount_flowfiles_sent{component_type="Processor", relationship="failure"} > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Processor {{ $labels.component_name }} đang gửi flowfiles tới failure"
+
+  # ===========================================================================
+  # NiFi JVM Alerts
+  # ===========================================================================
+  - name: nifi_jvm
+    rules:
+      # --- JVM Heap cao ---
+      - alert: NiFiHighHeapUsage
+        expr: nifi_jvm_heap_usage > 0.80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "NiFi JVM heap usage {{ $value | humanizePercentage }}"
+          description: "Heap usage vượt 80% trong 5 phút. Cân nhắc tăng -Xmx trong bootstrap.conf"
+
+      - alert: NiFiCriticalHeapUsage
+        expr: nifi_jvm_heap_usage > 0.92
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "NiFi JVM heap CRITICAL: {{ $value | humanizePercentage }}"
+
+      # --- Active threads quá nhiều ---
+      - alert: NiFiHighThreadCount
+        expr: nifi_amount_threads_active{component_type="RootProcessGroup"} > 150
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "NiFi active threads: {{ $value }}"
+
+  # ===========================================================================
+  # System (Node Exporter) Alerts
+  # ===========================================================================
+  - name: system_alerts
+    rules:
+      # --- CPU cao ---
+      - alert: HighCPUUsage
+        expr: >
+          100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU usage cao trên {{ $labels.instance }}: {{ $value | humanize }}%"
+
+      - alert: CriticalCPUUsage
+        expr: >
+          100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 95
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CPU CRITICAL trên {{ $labels.instance }}: {{ $value | humanize }}%"
+
+      # --- RAM thấp ---
+      - alert: LowMemory
+        expr: >
+          (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RAM usage cao trên {{ $labels.instance }}: {{ $value | humanizePercentage }}"
+
+      - alert: CriticalMemory
+        expr: node_memory_MemAvailable_bytes < 300 * 1024 * 1024
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "RAM khả dụng < 300MB trên {{ $labels.instance }}"
+
+      # --- Disk đầy ---
+      - alert: DiskAlmostFull
+        expr: >
+          (1 - node_filesystem_avail_bytes{fstype!="tmpfs"} /
+               node_filesystem_size_bytes{fstype!="tmpfs"}) > 0.80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk usage > 80% trên {{ $labels.instance }}"
+
+      - alert: DiskCritical
+        expr: >
+          (1 - node_filesystem_avail_bytes{fstype!="tmpfs"} /
+               node_filesystem_size_bytes{fstype!="tmpfs"}) > 0.90
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk usage > 90% trên {{ $labels.instance }}. Hành động ngay!"
+
+  # ===========================================================================
+  # Kafka Alerts
+  # ===========================================================================
+  - name: kafka_alerts
+    rules:
+      # --- Kafka consumer lag cao (Kafka Exporter)
+      # Metric: kafka_consumergroup_lag_sum (sum of all partition lags in a consumer group)
+      - alert: KafkaHighConsumerLag
+        expr: kafka_consumergroup_lag_sum > 10000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka consumer lag cao: {{ $value }}"
+          description: "Consumer group '{{ $labels.consumergroup }}' topic '{{ $labels.topic }}' có lag {{ $value }} messages"
+
+      # --- Kafka topic messages cũ (producer không gửi)
+      - alert: KafkaTopicNoMessages
+        expr: rate(kafka_topic_partition_current_offset[5m]) == 0
+        for: 10m
+        labels:
+          severity: info
+        annotations:
+          summary: "Không có messages mới trên topic '{{ $labels.topic }}'"
+
+  # ===========================================================================
+  # Camera Agent / gRPC Server Alerts
+  # ===========================================================================
+  - name: camera_monitoring_alerts
+    rules:
+      # --- Agent ngừng gửi metrics
+      - alert: CameraAgentSilent
+        expr: |
+          camera_active_agents > 0
+          and
+          (camera_metrics_received_total - camera_metrics_received_total offset 5m) == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Agent camera không gửi metrics hơn 5 phút"
+          description: "Không có metrics mới được nhận. Kiểm tra agent trên Storage VPS."
+
+      # --- gRPC Server produce Kafka thất bại
+      - alert: CameraMetricsKafkaFailure
+        expr: rate(camera_metrics_produced_failed_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "gRPC Server không produce được metrics vào Kafka"
+          description: "Tỷ lệ thất bại: {{ $value }}/s"
+
+      # --- Agent không kết nối
+      - alert: CameraNoAgentsConnected
+        expr: camera_active_agents == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Không có agent nào kết nối tới gRPC Server"

@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package monitoring;
+
+import "google/protobuf/struct.proto";
+
+service Monitoring {
+   rpc StreamMetrics(stream MetricsRequest) returns (stream Command);
+}
+
+message SystemMetrics {
+    double cpu_percent = 1;
+    double memory_percent = 2;
+    double memory_used_mb = 3;
+    double memory_total_mb = 4;
+    double disk_read_mb = 5;
+    double disk_write_mb = 6;
+    double net_in_mb = 7;
+    double net_out_mb = 8;
+}
+
+message MetricsRequest {
+    string hostname = 1;
+    SystemMetrics metrics = 2;
+    int64 timestamp = 3;
+    google.protobuf.Struct metadata = 4;
+}
+
+enum CommandType {
+    ACK = 0;
+    CONFIG = 1;
+    DIAGNOSTIC = 2;
+}
+
+message Command {
+    CommandType type = 1;
+    google.protobuf.Struct params = 2;
+}

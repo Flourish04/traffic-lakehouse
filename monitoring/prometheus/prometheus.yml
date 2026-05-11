@@ -1,0 +1,63 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+alerting:
+  alertmanagers: []
+
+rule_files:
+  - "alert_rules.yml"
+
+scrape_configs:
+  # ─────────────────────────────────────────────
+  # NiFi (standalone - truy cập qua localhost vì Prometheus dùng host network)
+  # ─────────────────────────────────────────────
+  - job_name: 'nifi'
+    scheme: https
+    tls_config:
+      insecure_skip_verify: true
+    authorization:
+      type: Bearer
+      credentials_file: /tmp/nifi_token
+    metrics_path: '/nifi-api/flow/metrics/prometheus'
+    scrape_interval: 30s
+    scrape_timeout: 15s
+    static_configs:
+      - targets: ['localhost:8443']
+        labels:
+          instance: 'nifi-compute'
+
+  # ─────────────────────────────────────────────
+  # Node Exporter - Compute VPS (localhost vì cùng host)
+  # ─────────────────────────────────────────────
+  - job_name: 'node-compute'
+    static_configs:
+      - targets: ['localhost:9100']
+        labels:
+          node: 'compute'
+
+  # ─────────────────────────────────────────────
+  # Prometheus self-monitoring
+  # ─────────────────────────────────────────────
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # ─────────────────────────────────────────────
+  # Kafka Exporter - Metrics từ Kafka (consumer lag, offsets)
+  # ─────────────────────────────────────────────
+  - job_name: 'kafka'
+    static_configs:
+      - targets: ['localhost:9308']
+        labels:
+          instance: 'kafka'
+
+  # ─────────────────────────────────────────────
+  # Redis Exporter - Metrics từ Redis (memory, keys, hits/misses, clients)
+  # ─────────────────────────────────────────────
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['localhost:9121']
+        labels:
+          instance: 'redis'

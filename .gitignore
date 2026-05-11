@@ -1,0 +1,109 @@
+# ============================================================
+# SECURITY: Never commit these files
+# ============================================================
+
+# Secrets, credentials, tokens
+.env
+.env.compute
+.env.lakehouse
+.env.monitoring
+**/secrets/
+**/*.pem
+**/*.key
+**/*.crt
+**/*.p12
+**/*.jks
+
+# NiFi JWT token - NEVER commit real tokens
+monitoring/prometheus/nifi_token
+
+# S3 config (contains real credentials for SeaweedFS)
+lakehouse/s3.json
+
+# Database data
+data/
+**/data/
+*.db
+*.sqlite
+
+# Logs
+**/*.log
+**/logs/
+
+# Python
+.venv/
+venv/
+env/
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+eggs/
+*.egg
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node.js
+node_modules/
+package-lock.json
+yarn.lock
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Docker volumes
+**/volumes/
+**/*.tar.gz
+
+# Prometheus data
+prometheus_data/
+grafana_data/
+
+# Textfile collector (dynamic)
+/var/lib/node_exporter/textfile_collector/
+
+# Java
+*.class
+*.jar
+*.war
+target/
+.gradle/
+
+# Groovy compiled
+*.class
+
+# Config overrides (local only)
+config.local.yml
+config.local.json
+application-local.yml
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+/tmp/
+/tmp/**/*
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Build artifacts
+**/build/
+**/dist/
+*.o
+*.so
+*.dylib
+HK252-DATN-166.pdf

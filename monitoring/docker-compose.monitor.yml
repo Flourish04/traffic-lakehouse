@@ -1,0 +1,115 @@
+# ============================================================
+# MONITORING STACK - Prometheus + Grafana + Node Exporter
+# Deploy: docker compose up -d
+# ============================================================
+
+services:
+  # ─────────────────────────────────────────────
+  # Node Exporter - Thu thập metrics hệ thống (CPU, RAM, Disk, Network)
+  # Chạy host network + pid:host để truy cập /proc, /sys
+  # ─────────────────────────────────────────────
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: node-exporter
+    restart: unless-stopped
+    network_mode: host
+    pid: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|$)'
+      - '--collector.textfile.directory=/var/lib/node_exporter/textfile_collector'
+    user: root
+
+  # ─────────────────────────────────────────────
+  # Prometheus (host network - để truy cập NiFi localhost:8443)
+  # ─────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.53.3
+    container_name: prometheus
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      # NOTE: nifi_token is generated at runtime by monitoring/scripts/refresh_nifi_token.sh
+      # Ensure the token file exists before starting Prometheus:
+      #   ./scripts/refresh_nifi_token.sh && docker compose up -d prometheus
+      - /tmp/nifi_token:/tmp/nifi_token:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--storage.tsdb.retention.size=5GB'
+      - '--web.enable-lifecycle'
+      - '--web.listen-address=0.0.0.0:9090'
+
+  # ─────────────────────────────────────────────
+  # Kafka Exporter - Thu thập Kafka metrics (consumer lag, topic offsets)
+  # Metrics: kafka_consumer_lag, kafka_topic_partition_current_offset, v.v.
+  # ─────────────────────────────────────────────
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:latest
+    container_name: kafka-exporter
+    restart: unless-stopped
+    networks:
+      - compute_net
+    ports:
+      - "9308:9308"
+    command:
+      - '--kafka.server=kafka:9093'
+
+  # ─────────────────────────────────────────────
+  # Redis Exporter - Thu thập Redis metrics (memory, keys, hits/misses, clients)
+  # Metrics: redis_memory_used_bytes, redis_db_keys, redis_keyspace_hits_total, v.v.
+  # ─────────────────────────────────────────────
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: redis-exporter
+    restart: unless-stopped
+    networks:
+      - compute_net
+    ports:
+      - "9121:9121"
+    command:
+      - '--redis.addr=redis://redis-traffic:6379'
+
+  # ─────────────────────────────────────────────
+  # Grafana (host network - truy cập Prometheus trên localhost:9090)
+  # ─────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:11.4.0
+    container_name: grafana
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:rw
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD:?GF_SECURITY_ADMIN_PASSWORD is required}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+      - GF_DATE_FORMATS_DEFAULT_TIMEZONE=Asia/Ho_Chi_Minh
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus_data:
+    name: monitoring_prometheus_data
+  grafana_data:
+    name: monitoring_grafana_data
+
+networks:
+  compute_net:
+    external: true
+  monitoring_net:
+    external: true
+  monitoring_default:
+    external: true

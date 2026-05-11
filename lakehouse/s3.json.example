@@ -1,0 +1,26 @@
+{
+  "_comment": "SeaweedFS S3 Configuration - DO NOT COMMIT THIS FILE WITH REAL CREDENTIALS",
+  "_template": "Copy this file to s3.json and fill in your actual credentials",
+  "identities": [
+    {
+      "name": "admin_user",
+      "credentials": [
+        {
+          "accessKey": "YOUR_S3_ACCESS_KEY",
+          "secretKey": "YOUR_S3_SECRET_KEY"
+        }
+      ],
+      "actions": [
+        "Read",
+        "Write",
+        "List",
+        "Tagging",
+        "Admin"
+      ]
+    }
+  ],
+  "disableV4Signing": true,
+  "allowEmptyContentLength": true,
+  "allowCors": true,
+  "verbose": false
+}

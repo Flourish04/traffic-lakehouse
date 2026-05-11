@@ -1,0 +1,43 @@
+# ============================================================
+# STORAGE NODE - Deploy on Storage VPS (2GB RAM)
+# ============================================================
+# Service: SeaweedFS only (~300-500MB RAM)
+# Tất cả catalog/metadata services chạy trên Compute VPS
+#
+# Usage:
+#   docker compose -f docker-compose.storage.yml up -d
+# ============================================================
+
+services:
+  seaweedfs:
+    image: chrislusf/seaweedfs:latest
+    container_name: seaweedfs
+    command: >
+      server
+      -dir=/data
+      -s3
+      -s3.config=/etc/seaweedfs/s3.json
+      -ip=0.0.0.0
+      -volume.max=2000
+      -master.volumeSizeLimitMB=30000
+      -volume.index=leveldb
+    volumes:
+      - /data/seaweed:/data
+      - ./s3.json:/etc/seaweedfs/s3.json
+    ports:
+      - "0.0.0.0:8333:8333"   # S3 endpoint → Compute VPS cần
+      - "0.0.0.0:9333:9333"   # Master UI   (debug, có thể đóng)
+      - "0.0.0.0:8888:8888"   # Filer UI    (debug, có thể đóng)
+    deploy:
+      resources:
+        limits:
+          memory: 1.2G
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 8333 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped

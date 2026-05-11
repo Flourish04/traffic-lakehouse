@@ -1,0 +1,1956 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Giám sát NiFi Traffic Pipeline: 5 Process Group chính (IMAGE_INGESTION, SPEED_INGESTION, BATCHING, AI). Dashboard 3 tầng: Tổng quan → So sánh PG → Drill-down Processor.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
+      "title": "Open NiFi UI",
+      "tooltip": "Mở NiFi Web UI để xử lý sự cố",
+      "type": "link",
+      "url": "https://localhost:8443/nifi/"
+    },
+    {
+      "asDropdown": false,
+      "icon": "bolt",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": true,
+      "title": "Prometheus Alerts",
+      "tooltip": "Xem active alerts trên Prometheus",
+      "type": "link",
+      "url": "http://localhost:9090/alerts"
+    }
+  ],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 100,
+      "title": "TẦNG 1: TỔNG QUAN HỆ THỐNG",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "DOWN"
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
+                "1": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "UP"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short",
+          "noValue": "N/A"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 0,
+        "y": 1
+      },
+      "id": 7,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "up{job=\"nifi\"}",
+          "instant": true,
+          "legendFormat": "NiFi",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "NiFi Status",
+      "description": "UP = Prometheus scrape NiFi OK. DOWN = kiểm tra token hoặc NiFi service.",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 150
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 2,
+        "y": 1
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "sum(nifi_amount_threads_active{component_type=\"RootProcessGroup\"})",
+          "instant": true,
+          "legendFormat": "Active Threads",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Active Threads",
+      "description": "Tổng luồng xử lý. Chạm max = pipeline đứng.",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 500
+              },
+              {
+                "color": "red",
+                "value": 2000
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 6,
+        "y": 1
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "sum(nifi_amount_items_queued{component_type=\"ProcessGroup\", component_name=~\"IMAGE_INGESTION|SPEED_INGESTION|WEATHER_INGESTION|BATCHING|AI\"})",
+          "instant": true,
+          "legendFormat": "FlowFiles Queued",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "FlowFiles Queued",
+      "description": "Tổng file kẹt (chỉ top-level PG). Tăng liên tục = tắc nghẽn.",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 104857600
+              },
+              {
+                "color": "red",
+                "value": 536870912
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 10,
+        "y": 1
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "sum(nifi_size_content_queued_total{component_type=\"ProcessGroup\", component_name=~\"IMAGE_INGESTION|SPEED_INGESTION|WEATHER_INGESTION|BATCHING|AI\"})",
+          "instant": true,
+          "legendFormat": "Bytes Queued",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Bytes Queued",
+      "description": "Ảnh camera kẹt lâu = ăn RAM.",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "dtdurations"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 14,
+        "y": 1
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "nifi_jvm_uptime / 1000",
+          "legendFormat": "Uptime",
+          "refId": "A"
+        }
+      ],
+      "title": "Uptime",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 0.7
+              },
+              {
+                "color": "orange",
+                "value": 0.8
+              },
+              {
+                "color": "red",
+                "value": 0.9
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 16,
+        "y": 1
+      },
+      "id": 8,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "nifi_jvm_heap_usage",
+          "legendFormat": "JVM Heap",
+          "refId": "A"
+        }
+      ],
+      "title": "JVM Heap",
+      "description": "Heap > 80% (vàng) → cân nhắc tăng -Xmx. > 90% (đỏ) → hành động ngay.",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.7
+              },
+              {
+                "color": "red",
+                "value": 0.85
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 20,
+        "y": 1
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "nifi_content_repo_used_space_bytes / nifi_content_repo_total_space_bytes",
+          "legendFormat": "Content Repo",
+          "refId": "A"
+        }
+      ],
+      "title": "Content Repo",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.7
+              },
+              {
+                "color": "red",
+                "value": 0.85
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 22,
+        "y": 1
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "nifi_flow_file_repo_used_space_bytes / nifi_flow_file_repo_total_space_bytes",
+          "legendFormat": "FlowFile Repo",
+          "refId": "A"
+        }
+      ],
+      "title": "FlowFile Repo",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "id": 200,
+      "title": "TẦNG 2: SỨC KHỎ̂E 5 PROCESS GROUP",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 100
+              },
+              {
+                "color": "red",
+                "value": 500
+              }
+            ]
+          },
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 7
+      },
+      "id": 20,
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "minVizHeight": 16,
+        "minVizWidth": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "sum by (component_name) (nifi_amount_items_queued{component_type=\"ProcessGroup\", component_name=~\"IMAGE_INGESTION|SPEED_INGESTION|WEATHER_INGESTION|BATCHING|AI\"})",
+          "instant": true,
+          "legendFormat": "{{ component_name }}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Items Queued (Tắc ở đâu?)",
+      "description": "Thanh dài nhất = luồng kẹt nhiều nhất. Chỉ hiển thị top-level PG.",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 52428800
+              },
+              {
+                "color": "red",
+                "value": 209715200
+              }
+            ]
+          },
+          "unit": "bytes",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 7
+      },
+      "id": 21,
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "sum by (component_name) (nifi_size_content_queued_total{component_type=\"ProcessGroup\", component_name=~\"IMAGE_INGESTION|SPEED_INGESTION|WEATHER_INGESTION|BATCHING|AI\"})",
+          "instant": true,
+          "legendFormat": "{{ component_name }}",
+          "refId": "A"
+        }
+      ],
+      "title": "Queue Bytes (Ai ăn dung lượng?)",
+      "description": "IMAGE_INGESTION thường cao nhất do ảnh camera",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 100
+              },
+              {
+                "color": "green",
+                "value": 1000
+              }
+            ]
+          },
+          "unit": "Bps",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 7
+      },
+      "id": 22,
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "sum by (component_name) (rate(nifi_amount_bytes_written{component_type=\"ProcessGroup\", component_name=~\"IMAGE_INGESTION|SPEED_INGESTION|WEATHER_INGESTION|BATCHING|AI\"}[5m]))",
+          "instant": true,
+          "legendFormat": "{{ component_name }}",
+          "refId": "A"
+        }
+      ],
+      "title": "Throughput Out (Ai đang bơm?)",
+      "description": "= 0 kéo dài = pipeline chết",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 14
+      },
+      "id": 23,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "sum by (component_name) (rate(nifi_amount_flowfiles_received{component_type=\"ProcessGroup\", component_name=~\"IMAGE_INGESTION|SPEED_INGESTION|WEATHER_INGESTION|BATCHING|AI\"}[5m]))",
+          "legendFormat": "IN: {{ component_name }}",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "sum by (component_name) (rate(nifi_amount_flowfiles_sent{component_type=\"ProcessGroup\", component_name=~\"IMAGE_INGESTION|SPEED_INGESTION|WEATHER_INGESTION|BATCHING|AI\"}[5m]))",
+          "legendFormat": "OUT: {{ component_name }}",
+          "refId": "B",
+          "hide": false
+        }
+      ],
+      "title": "FlowFiles In vs Out (In > Out = Bottleneck!)",
+      "description": "In > Out liên tục = nghẽn. In ≈ Out = khỏe.",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "hue",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 14
+      },
+      "id": 24,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "sum by (component_name) (nifi_amount_threads_active{component_type=\"ProcessGroup\", component_name=~\"IMAGE_INGESTION|SPEED_INGESTION|WEATHER_INGESTION|BATCHING|AI\"})",
+          "legendFormat": "{{ component_name }}",
+          "refId": "A"
+        }
+      ],
+      "title": "Active Threads (Ai chiếm tài nguyên?)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisColorMode": "series",
+            "drawStyle": "line",
+            "fillOpacity": 5,
+            "gradientMode": "hue",
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.5
+              },
+              {
+                "color": "red",
+                "value": 0.8
+              }
+            ]
+          },
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
+      "id": 25,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "max by (component_name) (nifi_percent_used_count{component_type=\"Connection\"}) > 0.01",
+          "legendFormat": "{{ component_name }}",
+          "refId": "A"
+        }
+      ],
+      "title": "Backpressure % (Connections > 1%)",
+      "description": "Vàng > 50%, Đỏ > 80% = component ngừng kéo data. Filter > 1% để loại bỏ noise.",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "id": 300,
+      "title": "TẦNG 3: CHẨN ĐOÁN - $process_group",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 20
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 30
+      },
+      "id": 30,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "sum(nifi_amount_threads_active{component_type=\"ProcessGroup\", component_name=~\"$process_group\"})",
+          "legendFormat": "Threads",
+          "refId": "A"
+        }
+      ],
+      "title": "Threads",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 100
+              },
+              {
+                "color": "red",
+                "value": 500
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 30
+      },
+      "id": 31,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "sum(nifi_amount_items_queued{component_type=\"ProcessGroup\", component_name=~\"$process_group\"})",
+          "legendFormat": "Queued",
+          "refId": "A"
+        }
+      ],
+      "title": "Queued",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 52428800
+              },
+              {
+                "color": "red",
+                "value": 209715200
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 30
+      },
+      "id": 32,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "sum(nifi_size_content_queued_total{component_type=\"ProcessGroup\", component_name=~\"$process_group\"})",
+          "legendFormat": "Queue Size",
+          "refId": "A"
+        }
+      ],
+      "title": "Queue Size",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0.01
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 30
+      },
+      "id": 33,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(nifi_amount_flowfiles_received{component_type=\"ProcessGroup\", component_name=~\"$process_group\"}[5m]))",
+          "legendFormat": "In/s",
+          "refId": "A"
+        }
+      ],
+      "title": "In/s",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0.01
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 30
+      },
+      "id": 34,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(nifi_amount_flowfiles_sent{component_type=\"ProcessGroup\", component_name=~\"$process_group\"}[5m]))",
+          "legendFormat": "Out/s",
+          "refId": "A"
+        }
+      ],
+      "title": "Out/s",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "thresholds": {
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 30
+      },
+      "id": 35,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(nifi_amount_bytes_written{component_type=\"ProcessGroup\", component_name=~\"$process_group\"}[5m]))",
+          "legendFormat": "Write/s",
+          "refId": "A"
+        }
+      ],
+      "title": "Write/s",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisColorMode": "text",
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "scheme",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "area"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 100
+              },
+              {
+                "color": "red",
+                "value": 500
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.axisBorderShow",
+                "value": true
+              },
+              {
+                "id": "unit",
+                "value": "decbytes"
+              },
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    10,
+                    10
+                  ]
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 34
+      },
+      "id": 36,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "sum(nifi_amount_items_queued{component_type=\"ProcessGroup\", component_name=~\"$process_group\"})",
+          "legendFormat": "Items Queued",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "sum(nifi_size_content_queued_total{component_type=\"ProcessGroup\", component_name=~\"$process_group\"})",
+          "legendFormat": "Queue Bytes",
+          "refId": "B",
+          "hide": false
+        }
+      ],
+      "title": "Queue Trend (Dốc lên = đang chết dần)",
+      "description": "Items Queued (trái) vs Queue Bytes (phải, nét đứt). Cả hai dốc lên = PG bị nghẽn.",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "opacity",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 34
+      },
+      "id": 37,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(nifi_amount_bytes_read{component_type=\"ProcessGroup\", component_name=~\"$process_group\"}[5m]))",
+          "legendFormat": "Bytes Read (In)",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(nifi_amount_bytes_written{component_type=\"ProcessGroup\", component_name=~\"$process_group\"}[5m]))",
+          "legendFormat": "Bytes Written (Out)",
+          "refId": "B",
+          "hide": false
+        }
+      ],
+      "title": "Throughput In vs Out (Bytes/sec)",
+      "description": "In >> Out kéo dài = bottleneck.",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "hue",
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 42
+      },
+      "id": 38,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "sum by (component_name) (rate(nifi_amount_flowfiles_sent{component_type=\"ProcessGroup\"}[5m]) and on(parent_id) label_replace(nifi_amount_flowfiles_sent{component_type=\"ProcessGroup\", component_name=~\"$process_group\"}, \"parent_id\", \"$1\", \"component_id\", \"(.*)\"))",
+          "legendFormat": "{{ component_name }}",
+          "refId": "A"
+        }
+      ],
+      "title": "Sub-PG: FlowFiles Sent/s",
+      "description": "Throughput ra của từng sub-PG (DISPATCHER, RAW_INGESTION...) bên trong PG đang chọn.",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "hue",
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 42
+      },
+      "id": 39,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "sum by (component_name) (nifi_amount_items_queued{component_type=\"ProcessGroup\"} and on(parent_id) label_replace(nifi_amount_items_queued{component_type=\"ProcessGroup\", component_name=~\"$process_group\"}, \"parent_id\", \"$1\", \"component_id\", \"(.*)\"))",
+          "legendFormat": "{{ component_name }}",
+          "refId": "A"
+        }
+      ],
+      "title": "Sub-PG: Items Queued (Thủ phạm nghẽn)",
+      "type": "timeseries",
+      "description": "Sub-PG nào đang bị kẹt nhiều nhất."
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "hue",
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 50
+      },
+      "id": 40,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "sum by (component_name) (rate(nifi_amount_bytes_written{component_type=\"ProcessGroup\"}[5m]) and on(parent_id) label_replace(nifi_amount_bytes_written{component_type=\"ProcessGroup\", component_name=~\"$process_group\"}, \"parent_id\", \"$1\", \"component_id\", \"(.*)\"))",
+          "legendFormat": "{{ component_name }}",
+          "refId": "A"
+        }
+      ],
+      "title": "Sub-PG: Bytes Written/s",
+      "description": "Sub-PG nào đang ghi nhiều dữ liệu nhất.",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "hue",
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 50
+      },
+      "id": 41,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "code",
+          "expr": "sum by (component_name) (nifi_amount_threads_active{component_type=\"ProcessGroup\"} and on(parent_id) label_replace(nifi_amount_threads_active{component_type=\"ProcessGroup\", component_name=~\"$process_group\"}, \"parent_id\", \"$1\", \"component_id\", \"(.*)\"))",
+          "legendFormat": "{{ component_name }}",
+          "refId": "A"
+        }
+      ],
+      "title": "Sub-PG: Active Threads (Ai chiếm CPU?)",
+      "type": "timeseries",
+      "description": "Sub-PG nào đang sử dụng nhiều thread nhất."
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "nifi",
+    "traffic-pipeline"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "definition": "label_values(nifi_amount_flowfiles_sent{component_type=\"ProcessGroup\", component_name=~\"IMAGE_INGESTION|SPEED_INGESTION|WEATHER_INGESTION|BATCHING|AI\"}, component_name)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Process Group",
+        "multi": false,
+        "name": "process_group",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(nifi_amount_flowfiles_sent{component_type=\"ProcessGroup\", component_name=~\"IMAGE_INGESTION|SPEED_INGESTION|WEATHER_INGESTION|BATCHING|AI\"}, component_name)"
+        },
+        "refresh": 1,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-3h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "Asia/Ho_Chi_Minh",
+  "title": "NiFi Traffic Pipeline Monitor",
+  "uid": "nifi-traffic-pipeline",
+  "version": 11,
+  "weekStart": ""
+}

@@ -1,0 +1,6 @@
+grpcio>=1.62.0
+grpcio-tools>=1.62.0
+protobuf>=5.0.0
+confluent-kafka==2.3.0
+prometheus-client==0.20.0
+python-dotenv==1.0.1

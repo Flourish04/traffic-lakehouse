@@ -1,0 +1,926 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {"type": "grafana", "uid": "-- Grafana --"},
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Giám sát Kafka Cluster: Brokers, Topics, Consumer Groups, Offsets, Lag, Partitions.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [
+    {
+      "asDropdown": false, "icon": "external link",
+      "includeVars": false, "keepTime": false, "tags": [],
+      "targetBlank": true, "title": "Prometheus",
+      "tooltip": "Truy cập Prometheus để xem raw metrics",
+      "type": "link",
+      "url": "http://localhost:9090/graph"
+    },
+    {
+      "asDropdown": false, "icon": "bolt",
+      "includeVars": false, "keepTime": true, "tags": [],
+      "targetBlank": true, "title": "Prometheus Alerts",
+      "tooltip": "Xem active alerts",
+      "type": "link",
+      "url": "http://localhost:9090/alerts"
+    }
+  ],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0},
+      "id": 100,
+      "title": "⚡ TẦNG 1: TỔNG QUAN CLUSTER",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "orange", "value": 70},
+              {"color": "red", "value": 85}
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 4, "x": 0, "y": 1},
+      "id": 1,
+      "options": {
+        "minVizHeight": 75, "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"], "fields": "", "values": false
+        },
+        "showThresholdLabels": false, "showThresholdMarkers": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "builder",
+          "expr": "kafka_brokers{instance=\"kafka\"}",
+          "instant": true,
+          "legendFormat": "Brokers",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Số Brokers",
+      "description": "Số lượng broker đang active trong cluster.",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "orange", "value": 70},
+              {"color": "red", "value": 85}
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 4, "x": 4, "y": 1},
+      "id": 2,
+      "options": {
+        "minVizHeight": 75, "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"], "fields": "", "values": false
+        },
+        "showThresholdLabels": false, "showThresholdMarkers": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "builder",
+          "expr": "sum(kafka_topic_partitions{instance=\"kafka\", topic=~\"$topic\"})",
+          "instant": true,
+          "legendFormat": "Partitions",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Số Partitions ($topic)",
+      "description": "Tổng số partition của topic đang chọn.",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 1000},
+              {"color": "red", "value": 10000}
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 4, "x": 8, "y": 1},
+      "id": 3,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"], "fields": "", "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "builder",
+          "expr": "sum(kafka_topic_partition_current_offset{instance=\"kafka\", topic=~\"$topic\"})",
+          "instant": true,
+          "legendFormat": "Produced Offset",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Produced Offset (Latest)",
+      "description": "Offset mới nhất đã được produce vào topic.",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 1000},
+              {"color": "red", "value": 10000}
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 4, "x": 12, "y": 1},
+      "id": 4,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"], "fields": "", "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "builder",
+          "expr": "sum(kafka_consumergroup_current_offset{instance=\"kafka\", topic=~\"$topic\"})",
+          "instant": true,
+          "legendFormat": "Committed Offset",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Committed Offset (Latest)",
+      "description": "Offset mà consumer group đã commit.",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "orange", "value": 1000},
+              {"color": "red", "value": 50000}
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 4, "x": 16, "y": 1},
+      "id": 5,
+      "options": {
+        "minVizHeight": 75, "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"], "fields": "", "values": false
+        },
+        "showThresholdLabels": false, "showThresholdMarkers": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "builder",
+          "expr": "sum(kafka_consumergroup_lag{instance=\"kafka\", topic=~\"$topic\", consumergroup=~\"$consumergroup\"})",
+          "instant": true,
+          "legendFormat": "Consumer Lag",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Consumer Lag",
+      "description": "Tổng lag = Produced Offset - Committed Offset. Lag > 0 = consumer chưa kịp xử lý.",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "orange", "value": 70},
+              {"color": "red", "value": 85}
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 4, "x": 20, "y": 1},
+      "id": 6,
+      "options": {
+        "minVizHeight": 75, "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"], "fields": "", "values": false
+        },
+        "showThresholdLabels": false, "showThresholdMarkers": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "builder",
+          "expr": "sum(kafka_topic_partition_under_replicated_partition{instance=\"kafka\", topic=~\"$topic\"})",
+          "instant": true,
+          "legendFormat": "Under-replicated",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Under-replicated Partitions",
+      "description": "Số partition đang thiếu replica. > 0 = có broker down hoặc replica lag.",
+      "type": "gauge"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 9},
+      "id": 200,
+      "title": "📊 TẦNG 2: TOPIC OFFSETS",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "hue",
+            "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {"type": "linear"},
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {"group": "A", "mode": "none"},
+            "thresholdsStyle": {"mode": "off"}
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{"color": "green", "value": null}]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 10},
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": ["lastNotNull", "max"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {"mode": "multi", "sort": "desc"}
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "builder",
+          "expr": "kafka_topic_partition_current_offset{instance=\"kafka\", topic=~\"$topic\"}",
+          "instant": false,
+          "legendFormat": "{{topic}} [p={{partition}}]",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Produced Offset theo Partition",
+      "description": "Offset hiện tại của mỗi partition. Thanh dốc lên = producer đang ghi liên tục.",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "hue",
+            "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {"type": "linear"},
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {"group": "A", "mode": "none"},
+            "thresholdsStyle": {"mode": "off"}
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{"color": "green", "value": null}]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 10},
+      "id": 11,
+      "options": {
+        "legend": {
+          "calcs": ["lastNotNull", "max"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {"mode": "multi", "sort": "desc"}
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "builder",
+          "expr": "kafka_topic_partition_oldest_offset{instance=\"kafka\", topic=~\"$topic\"}",
+          "instant": false,
+          "legendFormat": "{{topic}} [p={{partition}}]",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Oldest (Retain Boundary)",
+      "description": "Offset cũ nhất đang được retain. Gap với current = data size đang lưu.",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 18},
+      "id": 300,
+      "title": "🎯 TẦNG 3: CONSUMER GROUPS",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "hue",
+            "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {"type": "linear"},
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {"group": "A", "mode": "none"},
+            "thresholdsStyle": {"mode": "off"}
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 1000},
+              {"color": "red", "value": 10000}
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 19},
+      "id": 12,
+      "options": {
+        "legend": {
+          "calcs": ["lastNotNull", "max"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {"mode": "multi", "sort": "desc"}
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "builder",
+          "expr": "kafka_consumergroup_lag{instance=\"kafka\", topic=~\"$topic\", consumergroup=~\"$consumergroup\"}",
+          "instant": false,
+          "legendFormat": "{{consumergroup}} / {{topic}}[p={{partition}}]",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Consumer Lag theo Partition",
+      "description": "Lag = produced offset - committed offset. Lag tăng = consumer không theo kịp. > 10K = action needed.",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "hue",
+            "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {"type": "linear"},
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {"group": "A", "mode": "none"},
+            "thresholdsStyle": {"mode": "off"}
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{"color": "green", "value": null}]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 19},
+      "id": 13,
+      "options": {
+        "legend": {
+          "calcs": ["lastNotNull"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {"mode": "multi", "sort": "desc"}
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "builder",
+          "expr": "kafka_consumergroup_current_offset{instance=\"kafka\", topic=~\"$topic\", consumergroup=~\"$consumergroup\"}",
+          "instant": false,
+          "legendFormat": "{{consumergroup}} / {{topic}}[p={{partition}}]",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Consumer Committed Offset",
+      "description": "Offset mà consumer group đã commit theo từng partition.",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 27},
+      "id": 400,
+      "title": "💾 TẦNG 4: PARTITION HEALTH",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "hue",
+            "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {"type": "linear"},
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {"group": "A", "mode": "none"},
+            "thresholdsStyle": {"mode": "off"}
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "red", "value": 1}
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "0"},
+            "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]
+          }
+        ]
+      },
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 28},
+      "id": 14,
+      "options": {
+        "legend": {
+          "calcs": ["lastNotNull"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {"mode": "multi", "sort": "desc"}
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "builder",
+          "expr": "kafka_topic_partition_in_sync_replica{instance=\"kafka\", topic=~\"$topic\"}",
+          "instant": false,
+          "legendFormat": "{{topic}}[p={{partition}}]",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "In-Sync Replicas (ISR)",
+      "description": "Số replica đang in-sync cho mỗi partition. ISR < replication factor = có vấn đề.",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "hue",
+            "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {"type": "linear"},
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {"group": "A", "mode": "none"},
+            "thresholdsStyle": {"mode": "off"}
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "red", "value": 1}
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "0"},
+            "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}]
+          }
+        ]
+      },
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 28},
+      "id": 15,
+      "options": {
+        "legend": {
+          "calcs": ["lastNotNull"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {"mode": "multi", "sort": "desc"}
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "builder",
+          "expr": "kafka_topic_partition_replicas{instance=\"kafka\", topic=~\"$topic\"}",
+          "instant": false,
+          "legendFormat": "{{topic}}[p={{partition}}]",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Total Replicas",
+      "description": "Tổng số replica cho mỗi partition. ISR <= Total Replicas.",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "red", "value": 1}
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 28},
+      "id": 16,
+      "options": {
+        "minVizHeight": 75, "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"], "fields": "", "values": false
+        },
+        "showThresholdLabels": false, "showThresholdMarkers": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "builder",
+          "expr": "sum(kafka_topic_partition_under_replicated_partition{instance=\"kafka\", topic=~\"$topic\"})",
+          "instant": true,
+          "legendFormat": "Under-replicated",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Under-replicated Partitions",
+      "description": "Partition có số replica < expected. > 0 = nguy hiểm, có thể mất data.",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 1},
+              {"color": "orange", "value": 2}
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 36},
+      "id": 17,
+      "options": {
+        "displayMode": "gradient",
+        "minVizHeight": 10, "minVizWidth": 0,
+        "namePlacement": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"], "fields": "", "values": false
+        },
+        "showUnfilled": true, "valueMode": "color"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "d5c98e6b-995d-49b0-a229-205b495c7caf"
+          },
+          "editorMode": "builder",
+          "expr": "sum by (topic, partition) (kafka_consumergroup_lag{instance=\"kafka\", consumergroup=~\"$consumergroup\"})",
+          "instant": true,
+          "legendFormat": "{{topic}}[p={{partition}}]",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Consumer Lag Summary (Latest by Partition)",
+      "description": "Bảng tổng hợp lag hiện tại theo partition. Dùng để phát hiện partition nào đang lag nhiều nhất.",
+      "type": "bargauge"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["kafka", "cluster", "messaging"],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "definition": "label_values(kafka_topic_partition_current_offset{instance=\"kafka\", topic!~\"__consumer_offsets|__transaction_state|_schemas\"}, topic)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Topic",
+        "multi": true,
+        "name": "topic",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(kafka_topic_partition_current_offset{instance=\"kafka\", topic!~\"__consumer_offsets|__transaction_state|_schemas\"}, topic)"
+        },
+        "refresh": 1,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {},
+        "definition": "label_values(kafka_consumergroup_lag{instance=\"kafka\"}, consumergroup)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Consumer Group",
+        "multi": true,
+        "name": "consumergroup",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(kafka_consumergroup_lag{instance=\"kafka\"}, consumergroup)"
+        },
+        "refresh": 1,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "Asia/Ho_Chi_Minh",
+  "title": "Kafka Cluster Monitor",
+  "uid": "kafka-cluster-monitor",
+  "version": 2,
+  "weekStart": ""
+}

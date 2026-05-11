@@ -1,0 +1,272 @@
+# ============================================================
+# COMPUTE NODE - Deploy on Compute VPS
+# ============================================================
+# Services: PostgreSQL + Iceberg REST + Trino + Kafka (local).
+# NiFi chạy ngoài compose này — heap JVM NiFi cần cân tay trên host (bootstrap.conf).
+# Connects to Storage VPS (SeaweedFS) via STORAGE_HOST
+# (SeaweedFS không nằm trong compose này.) Kiểm tra :8333 trước khi up:
+#   STORAGE_HOST=... ./scripts/check_storage_s3.sh
+#
+# Usage:
+#   cp .env.compute.example .env
+#   # Edit .env → set STORAGE_HOST and COMPUTE_HOST
+#   docker compose -f docker-compose.yml --env-file .env up -d
+# ============================================================
+
+services:
+  # ─────────────────────────────────────────────
+  # 1) PostgreSQL: metadata DB cho Iceberg catalog
+  # ─────────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: iceberg-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-iceberg}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "127.0.0.1:5433:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "iceberg", "-d", "iceberg"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - compute_net
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────
+  # 2) Iceberg REST catalog
+  # ─────────────────────────────────────────────
+  iceberg-rest:
+    image: tabulario/iceberg-rest:1.6.0
+    container_name: iceberg-rest
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY:?S3_ACCESS_KEY is required}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:?S3_SECRET_KEY is required}
+      AWS_REGION: ${S3_REGION:-us-east-1}
+
+      CATALOG_WAREHOUSE: s3://warehouse/
+
+      CATALOG_IO__IMPL: org.apache.iceberg.aws.s3.S3FileIO
+      CATALOG_S3_ENDPOINT: http://${STORAGE_HOST}:8333
+      CATALOG_S3_PATH__STYLE__ACCESS: "true"
+
+      CATALOG_CATALOG__IMPL: org.apache.iceberg.jdbc.JdbcCatalog
+      CATALOG_URI: jdbc:postgresql://iceberg-postgres:5432/${POSTGRES_DB:-iceberg}
+      CATALOG_JDBC_USER: ${POSTGRES_USER:-iceberg}
+      CATALOG_JDBC_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    ports:
+      - "127.0.0.1:8181:8181"
+    extra_hosts:
+      - "storage-vps:${STORAGE_HOST:?Set STORAGE_HOST in .env}"
+    networks:
+      - compute_net
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 5 bash -c '</dev/tcp/localhost/8181' || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────
+  # 3) Trino: query engine cho Iceberg
+  # ─────────────────────────────────────────────
+  trino:
+    image: trinodb/trino:435
+    container_name: trino
+    depends_on:
+      iceberg-rest:
+        condition: service_healthy
+    # Cố định heap trong jvm.config + trần cgroup (RSS ≈ heap + native + mmap).
+    # Heap 3G; giữ cgroup dư cho native/spill khi cạnh tranh RAM với NiFi/Kafka.
+    mem_limit: 6g
+    volumes:
+      - ./compute-configs/trino/catalog:/etc/trino/catalog:ro
+      - ./compute-configs/trino/config.properties:/etc/trino/config.properties:ro
+      - ./compute-configs/trino/jvm.config:/etc/trino/jvm.config:ro
+    ports:
+      - "0.0.0.0:8085:8080"
+    extra_hosts:
+      - "storage-vps:${STORAGE_HOST:?Set STORAGE_HOST in .env}"
+    networks:
+      - compute_net
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/v1/info"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────
+  # 4) Zookeeper: required by Kafka
+  # ─────────────────────────────────────────────
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    hostname: zookeeper
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - ./data/zookeeper/data:/var/lib/zookeeper/data
+      - ./data/zookeeper/logs:/var/lib/zookeeper/log
+    ports:
+      - "127.0.0.1:2181:2181"
+    networks:
+      - compute_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 3 bash -c 'echo srvr | nc localhost 2181' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ─────────────────────────────────────────────
+  # 5) Kafka: message broker (local)
+  # ─────────────────────────────────────────────
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    hostname: kafka
+    container_name: kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    volumes:
+      - ./data/kafka/data:/var/lib/kafka/data
+      - ./data/kafka/logs:/var/lib/kafka/logs
+    ports:
+      - "${KAFKA_VPN_PORT:-9092}:9092"          # VPN/internal clients
+      - "9093:9093"                              # Docker network (internal)
+      - "${KAFKA_PUBLIC_PORT:-9094}:9094"       # External/public clients
+    environment:
+      # Ép Kafka dùng cluster ID cố định (tránh lỗi không khớp khi restart)
+      # KAFKA_CLUSTER_ID: '${KAFKA_CLUSTER_ID:-SMLc8KipSiKYc5G-_wf7ig}'
+
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+
+      # 3 listeners: INTERNAL (docker), VPN, PUBLIC (internet)
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT_INTERNAL:PLAINTEXT,PLAINTEXT_VPN:PLAINTEXT,PLAINTEXT_PUBLIC:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT_INTERNAL://0.0.0.0:9093,PLAINTEXT_VPN://0.0.0.0:9092,PLAINTEXT_PUBLIC://0.0.0.0:9094
+
+      # Advertised: internal=kafka:9093, VPN=STORAGE_HOST:9092, PUBLIC=COMPUTE_PUBLIC_HOST:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT_INTERNAL://kafka:9093,PLAINTEXT_VPN://${STORAGE_HOST}:9092,PLAINTEXT_PUBLIC://${COMPUTE_PUBLIC_HOST:?Set COMPUTE_PUBLIC_HOST in .env}:${KAFKA_PUBLIC_PORT:-9094}
+
+      # Inter-broker dùng internal (container-to-container)
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+
+      # Đường dẫn data volume
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+    extra_hosts:
+      - "storage-vps:${STORAGE_HOST:?Set STORAGE_HOST in .env}"
+    networks:
+      - compute_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9093"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ─────────────────────────────────────────────
+  # 6) Redis: mirror :day /… (ứng dụng giới hạn slot + optional EX; xem REDIS_* trong preprocessing)
+  # ─────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: redis-traffic
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - ./data/redis:/data
+    ports:
+      - "0.0.0.0:6379:6379"
+    networks:
+      - compute_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ─────────────────────────────────────────────
+  # 7) Kafka UI: web UI quản lý Kafka
+  # ─────────────────────────────────────────────
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "${KAFKA_UI_PORT:-8080}:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      # Kafka UI chạy trong Docker → dùng internal listener
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9093
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    networks:
+      - compute_net
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────
+  # 8) gRPC Server: nhận metrics từ Agent → produce vào Kafka
+  # ─────────────────────────────────────────────
+  grpc-server:
+    build:
+      context: /root/infra/nifi/monitoring
+      dockerfile: Dockerfile.server
+    container_name: grpc-server
+    ports:
+      - "${GRPC_SERVER_PORT:-50051}:50051"
+    environment:
+      - GRPC_SERVER_HOST=0.0.0.0
+      - GRPC_SERVER_PORT=${GRPC_SERVER_PORT:-50051}
+      - GRPC_METRICS_PORT=50052
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9093
+      - MONITORING_TOPIC=${MONITORING_TOPIC:-metrics}
+    networks:
+      - compute_net
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  # ─────────────────────────────────────────────
+  # 9) Kafka Exporter: Kafka broker metrics → Prometheus
+  # ─────────────────────────────────────────────
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:latest
+    container_name: kafka-exporter
+    ports:
+      - "9308:9308"
+    environment:
+      - KAFKA_BROKERS=kafka:9093
+      - KAFKA_EXPORTER_TOPIC_INCLUDE_PATTERN=.*
+    depends_on:
+      - kafka
+    networks:
+      - compute_net
+    restart: unless-stopped
+
+networks:
+  compute_net:
+    name: compute_net
+    driver: bridge

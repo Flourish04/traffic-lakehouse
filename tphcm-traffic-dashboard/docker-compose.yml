@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  traffic-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tphcm-traffic-dashboard
+    ports:
+      - "8501:8501"
+    environment:
+      - TRINO_HOST=${TRINO_HOST:-trino}
+      - TRINO_PORT=${TRINO_PORT:-8080}
+      - TRINO_USER=${TRINO_USER:-admin}
+      - TRINO_CATALOG=${TRINO_CATALOG:-iceberg}
+      - TRINO_SCHEMA=${TRINO_SCHEMA:-traffic}
+      - TRINO_PASSWORD=${TRINO_PASSWORD:-}
+      - DEFAULT_TIME_RANGE_DAYS=${DEFAULT_TIME_RANGE_DAYS:-7}
+    volumes:
+      - ./.streamlit:/app/.streamlit
+    networks:
+      - traffic-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  traffic-net:
+    external: true

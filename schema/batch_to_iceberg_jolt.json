@@ -1,0 +1,61 @@
+[
+  {
+    "operation": "shift",
+    "spec": {
+      "camera_id": "camera_id",
+      "slot": "slot",
+      "generated_at": "generated_at",
+      "duration_sec": "duration_sec",
+      "vehicles_count": "vehicles_count",
+      
+      "speed": {
+        "count": "speed_count",
+        "avg_kmh": "speed_avg_kmh",
+        "min_kmh": "speed_min_kmh",
+        "max_kmh": "speed_max_kmh",
+        "series": "speed_series"
+      },
+      
+      "weather": {
+        "weather": {
+          "0": {
+            "id": "weather.id",
+            "main": "weather.main",
+            
+            "description": "weather.description",
+            "icon": "weather.icon"
+          }
+        },
+        "main": {
+          "temp": "weather.temp",
+          "feels_like": "weather.feels_like",
+          "temp_min": "weather.temp_min",
+          "temp_max": "weather.temp_max",
+          "pressure": "weather.pressure",
+          "humidity": "weather.humidity",
+          "sea_level": "weather.sea_level",
+          "grnd_level": "weather.grnd_level"
+        },
+        "wind": {
+          "speed": "weather.wind_speed",
+          "deg": "weather.wind_deg"
+        },
+        "clouds": {
+          "all": "weather.clouds_all"
+        }
+      }
+    }
+  },
+  {
+    "operation": "default",
+    "spec": {
+      "vehicles_count": 0,
+      "speed_count": null,
+      "speed_avg_kmh": null,
+      "speed_min_kmh": null,
+      "speed_max_kmh": null,
+      "speed_series": null,
+      "weather": null
+    }
+  }
+]
